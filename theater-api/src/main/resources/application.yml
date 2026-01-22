@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: theater-api
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/theater?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: asdf1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  jackson:
+    time-zone: Asia/Seoul
+    date-format: yyyy-MM-dd HH:mm:ss
+
+server:
+  port: 8081
+
+logging:
+  level:
+    com.theater.api: DEBUG
+    org.hibernate.SQL: DEBUG

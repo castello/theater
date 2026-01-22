@@ -1,0 +1,6 @@
+id,title,description,duration_minutes,rating,poster_url,release_date,status
+1,어벤져스: 엔드게임,마블 히어로들의 최후의 전투,181,12세,/posters/avengers.jpg,2024-01-10,showing
+2,기생충,봉준호 감독의 블랙 코미디 스릴러,132,15세,/posters/parasite.jpg,2024-01-15,showing
+3,겨울왕국 3,엘사와 안나의 새로운 모험,110,전체,/posters/frozen3.jpg,2024-02-01,showing
+4,범죄도시 4,마동석 주연 액션 영화,109,15세,/posters/crime4.jpg,2024-03-01,upcoming
+5,듄: 파트 3,사막 행성 아라키스의 서사시,165,12세,/posters/dune3.jpg,2024-03-15,upcoming
