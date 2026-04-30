@@ -21,6 +21,18 @@ public class Payment {
     @JoinColumn(name = "reservation_id", nullable = false)
     private Reservation reservation;
 
+    @Column(name = "original_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal originalAmount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "discount_type", nullable = false)
+    @Builder.Default
+    private DiscountType discountType = DiscountType.none;
+
+    @Column(name = "discount_amount", nullable = false, precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
@@ -41,6 +53,10 @@ public class Payment {
 
     public enum PaymentStatus {
         pending, completed, refunded
+    }
+
+    public enum DiscountType {
+        none, early_bird, late_night
     }
 
     public void complete() {

@@ -23,6 +23,7 @@ public class ReservationService {
     private final ShowtimeRepository showtimeRepository;
     private final SeatRepository seatRepository;
     private final ReservedSeatRepository reservedSeatRepository;
+    private final PricingPolicyService pricingPolicyService;
 
     @Transactional
     public ReservationDto createReservation(ReservationRequest request) {
@@ -48,9 +49,8 @@ public class ReservationService {
             throw new IllegalArgumentException("유효하지 않은 좌석이 포함되어 있습니다");
         }
 
-        // 총 금액 계산
-        BigDecimal totalPrice = showtime.getPrice()
-                .multiply(BigDecimal.valueOf(seats.size()));
+        // 총 금액 계산 (좌석 타입별 배수 적용)
+        BigDecimal totalPrice = pricingPolicyService.calculateReservationPrice(showtime, seats);
 
         // 예약 생성
         Reservation reservation = Reservation.builder()

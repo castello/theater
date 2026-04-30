@@ -115,11 +115,31 @@ CREATE TABLE reserved_seats (
 CREATE TABLE payments (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     reservation_id BIGINT NOT NULL,
+    original_amount DECIMAL(10,2) NOT NULL,
+    discount_type ENUM('none', 'early_bird', 'late_night') NOT NULL DEFAULT 'none',
+    discount_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
     amount DECIMAL(10,2) NOT NULL,
     payment_method ENUM('card', 'kakao', 'naver') NOT NULL,
     status ENUM('pending', 'completed', 'refunded') DEFAULT 'pending',
     paid_at TIMESTAMP NULL,
     FOREIGN KEY (reservation_id) REFERENCES reservations(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 10. 좌석 타입별 가격 배수
+CREATE TABLE seat_type_prices (
+    seat_type ENUM('standard', 'premium', 'wheelchair') PRIMARY KEY,
+    price_multiplier DECIMAL(4,2) NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB;
+
+-- 11. 시간대 할인 정책 (start_time > end_time 이면 자정 넘김으로 해석)
+CREATE TABLE discount_policies (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    discount_type ENUM('early_bird', 'late_night') NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    discount_rate DECIMAL(4,2) NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE
 ) ENGINE=InnoDB;
 
 -- =============================================
@@ -277,17 +297,31 @@ INSERT INTO reserved_seats (id, reservation_id, seat_id) VALUES
 (24, 10, 27);
 
 -- 결제 데이터
-INSERT INTO payments (id, reservation_id, amount, payment_method, status, paid_at) VALUES
-(1, 1, 30000, 'card', 'completed', '2024-02-18 15:31:00'),
-(2, 2, 60000, 'kakao', 'completed', '2024-02-18 16:46:00'),
-(3, 3, 28000, 'naver', 'completed', '2024-02-19 09:21:00'),
-(4, 4, 36000, 'card', 'completed', '2024-02-19 10:01:00'),
-(5, 5, 50000, 'kakao', 'completed', '2024-02-19 11:31:00'),
-(6, 6, 42000, 'card', 'pending', NULL),
-(7, 7, 26000, 'naver', 'completed', '2024-02-19 15:21:00'),
-(8, 8, 66000, 'card', 'completed', '2024-02-20 08:01:00'),
-(9, 9, 36000, 'kakao', 'refunded', '2024-02-20 10:00:00'),
-(10, 10, 28000, 'card', 'completed', '2024-02-20 10:16:00');
+-- 예약 4 (showtime 7, 09:00 시작): 조조할인 30%
+-- 예약 8 (showtime 14, 19:00 시작): 일반
+-- 그 외: 일반
+INSERT INTO payments (id, reservation_id, original_amount, discount_type, discount_amount, amount, payment_method, status, paid_at) VALUES
+(1, 1, 30000, 'none', 0, 30000, 'card', 'completed', '2024-02-18 15:31:00'),
+(2, 2, 60000, 'none', 0, 60000, 'kakao', 'completed', '2024-02-18 16:46:00'),
+(3, 3, 28000, 'none', 0, 28000, 'naver', 'completed', '2024-02-19 09:21:00'),
+(4, 4, 36000, 'early_bird', 10800, 25200, 'card', 'completed', '2024-02-19 10:01:00'),
+(5, 5, 50000, 'none', 0, 50000, 'kakao', 'completed', '2024-02-19 11:31:00'),
+(6, 6, 42000, 'none', 0, 42000, 'card', 'pending', NULL),
+(7, 7, 26000, 'none', 0, 26000, 'naver', 'completed', '2024-02-19 15:21:00'),
+(8, 8, 66000, 'none', 0, 66000, 'card', 'completed', '2024-02-20 08:01:00'),
+(9, 9, 36000, 'none', 0, 36000, 'kakao', 'refunded', '2024-02-20 10:00:00'),
+(10, 10, 28000, 'none', 0, 28000, 'card', 'completed', '2024-02-20 10:16:00');
+
+-- 좌석 타입 가격 배수
+INSERT INTO seat_type_prices (seat_type, price_multiplier, active) VALUES
+('standard', 1.00, TRUE),
+('premium', 1.50, TRUE),
+('wheelchair', 0.50, TRUE);
+
+-- 시간대 할인 정책
+INSERT INTO discount_policies (id, discount_type, start_time, end_time, discount_rate, active) VALUES
+(1, 'early_bird', '06:00:00', '11:00:00', 0.30, TRUE),
+(2, 'late_night', '23:00:00', '06:00:00', 0.30, TRUE);
 
 -- =============================================
 -- 데이터 확인

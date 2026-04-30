@@ -8,9 +8,12 @@ import com.theater.api.entity.Reservation;
 import com.theater.api.entity.Reservation.ReservationStatus;
 import com.theater.api.repository.PaymentRepository;
 import com.theater.api.repository.ReservationRepository;
+import com.theater.api.service.PricingPolicyService.DiscountResolution;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +22,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final ReservationRepository reservationRepository;
+    private final PricingPolicyService pricingPolicyService;
 
     @Transactional
     public PaymentDto processPayment(PaymentRequest request) {
@@ -35,9 +39,19 @@ public class PaymentService {
 
         PaymentMethod paymentMethod = PaymentMethod.valueOf(request.getPaymentMethod().toLowerCase());
 
+        BigDecimal originalAmount = reservation.getTotalPrice();
+        DiscountResolution discount = pricingPolicyService.resolveDiscount(
+                reservation.getShowtime().getStartTime().toLocalTime(),
+                originalAmount
+        );
+        BigDecimal finalAmount = originalAmount.subtract(discount.discountAmount());
+
         Payment payment = Payment.builder()
                 .reservation(reservation)
-                .amount(reservation.getTotalPrice())
+                .originalAmount(originalAmount)
+                .discountType(discount.discountType())
+                .discountAmount(discount.discountAmount())
+                .amount(finalAmount)
                 .paymentMethod(paymentMethod)
                 .build();
 
@@ -45,8 +59,9 @@ public class PaymentService {
         payment.complete();
         paymentRepository.save(payment);
 
-        // 예약 확정
+        // 예약 확정 + 할인 적용된 최종 금액 반영
         reservation.setStatus(ReservationStatus.confirmed);
+        reservation.setTotalPrice(finalAmount);
         reservation.setPayment(payment);
 
         return PaymentDto.from(payment);
